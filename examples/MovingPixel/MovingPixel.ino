@@ -32,7 +32,7 @@ uint8_t positionY = 0;
 
 
 void setup() {
-  Wire.begin();
+  ledDriver.begin();
   Serial.begin(115200);
     
   // Wait until the chip is ready.

@@ -26,8 +26,8 @@ AS1130 ledDriver;
 
 
 void setup() {
-  // Initialize the Wire library.
-  Wire.begin();
+  // Initialize the library.
+  ledDriver.begin();
   
   // Initialize the serial port.
   Serial.begin(9600);

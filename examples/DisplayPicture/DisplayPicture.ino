@@ -33,7 +33,7 @@ const uint8_t exampleFrame1[] = {
   0b11111011, 0b11101111, 0b11111111};
 
 void setup() {
-  Wire.begin();
+  ledDriver.begin();
   Serial.begin(9600);
     
   // Wait until the chip is ready.

@@ -46,7 +46,7 @@ const uint8_t exampleFrame3[] = {
   0b00000000, 0b00000000, 0b00000000};
 
 void setup() {
-  Wire.begin();
+  ledDriver.begin();
   Serial.begin(9600);
     
   // Wait until the chip is ready.

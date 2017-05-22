@@ -30,7 +30,7 @@ AS1130Picture24x5 picture2;
 
 
 void setup() {
-  Wire.begin();
+  ledDriver.begin();
   Serial.begin(115200);
     
   // Wait until the chip is ready.
