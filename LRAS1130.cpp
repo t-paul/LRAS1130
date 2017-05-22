@@ -76,12 +76,21 @@ AS1130::AS1130(ChipAddress chipAddress)
 }
 
 
+void AS1130::begin(unsigned long initDelayMillis)
+{
+  LRAS1130_WIRE_LIB.begin();
+  if (initDelayMillis > 0) {
+    delay(initDelayMillis);
+  }
+}
+
+
 bool AS1130::isChipConnected()
 {
-  Wire.beginTransmission(_chipAddress); 
-  Wire.write(cRegisterSelectionAddress); 
-  Wire.write(RS_NOP); 
-  return Wire.endTransmission() == 0; 
+  LRAS1130_WIRE_LIB.beginTransmission(_chipAddress); 
+  LRAS1130_WIRE_LIB.write(cRegisterSelectionAddress); 
+  LRAS1130_WIRE_LIB.write(RS_NOP); 
+  return LRAS1130_WIRE_LIB.endTransmission() == 0; 
 }
 
 
@@ -466,10 +475,10 @@ uint8_t AS1130::getInterruptStatus()
 
 void AS1130::writeToChip(uint8_t address, uint8_t data)
 {
-  Wire.beginTransmission(_chipAddress); 
-  Wire.write(address); 
-  Wire.write(data); 
-  Wire.endTransmission(); 
+  LRAS1130_WIRE_LIB.beginTransmission(_chipAddress); 
+  LRAS1130_WIRE_LIB.write(address); 
+  LRAS1130_WIRE_LIB.write(data); 
+  LRAS1130_WIRE_LIB.endTransmission(); 
 }
 
 
@@ -482,27 +491,27 @@ void AS1130::writeToMemory(uint8_t registerSelection, uint8_t address, uint8_t d
 
 void AS1130::writeToMemory(uint8_t registerSelection, uint8_t address, const uint8_t *data, uint8_t size)
 {
-  writeToChip(cRegisterSelectionAddress, registerSelection);
-  Wire.beginTransmission(_chipAddress);
-  Wire.write(address); 
-  for (uint8_t i = 0; i < size; ++i) {
-    Wire.write(data[i]);
-  }  
-  Wire.endTransmission();   
+  writeToMemory(registerSelection, address, data, size, 1);
 }
 
 
 void AS1130::fillMemory(uint8_t registerSelection, uint8_t address, uint8_t value, uint8_t size)
 {
+  writeToMemory(registerSelection, address, &value, size, 0);
+}
+
+
+void AS1130::writeToMemory(uint8_t registerSelection, uint8_t address, const uint8_t *data, uint8_t size, uint8_t inc)
+{
   writeToChip(cRegisterSelectionAddress, registerSelection);
+  LRAS1130_WIRE_LIB.beginTransmission(_chipAddress);
   while (size > 0) {
-    Wire.beginTransmission(_chipAddress);
-    if (Wire.write(address) == 0) {
+    if (LRAS1130_WIRE_LIB.write(address) == 0) {
       // With failed address write, there is not much chance to do
       // anything useful, so this just finishes the transmission
       // and returns, leaving the error state set in the Wire
       // library.
-      Wire.endTransmission();
+      LRAS1130_WIRE_LIB.endTransmission();
       return;
     }
 
@@ -511,14 +520,15 @@ void AS1130::fillMemory(uint8_t registerSelection, uint8_t address, uint8_t valu
     // a maximum of 31 data bytes at once (in addition to the
     // address byte).
     while (size > 0) {
-      if (Wire.write(value) == 0) {
-        Wire.clearWriteError();
+      if (LRAS1130_WIRE_LIB.write(*data) == 0) {
+        LRAS1130_WIRE_CLEAR_ERROR;
         break;
       }
       size--;
       address++;
+	  data += inc;
     }
-    Wire.endTransmission();
+    LRAS1130_WIRE_LIB.endTransmission();
   }
 }
 
@@ -526,12 +536,12 @@ void AS1130::fillMemory(uint8_t registerSelection, uint8_t address, uint8_t valu
 uint8_t AS1130::readFromMemory(uint8_t registerSelection, uint8_t address)
 {
   writeToChip(cRegisterSelectionAddress, registerSelection);
-  Wire.beginTransmission(_chipAddress);
-  Wire.write(address);
-  Wire.endTransmission();
-  Wire.requestFrom(_chipAddress, 1);
-  if (Wire.available() == 1) {
-    const uint8_t data = Wire.read();
+  LRAS1130_WIRE_LIB.beginTransmission(_chipAddress);
+  LRAS1130_WIRE_LIB.write(address);
+  LRAS1130_WIRE_LIB.endTransmission();
+  LRAS1130_WIRE_LIB.requestFrom(_chipAddress, 1);
+  if (LRAS1130_WIRE_LIB.available() == 1) {
+    const uint8_t data = LRAS1130_WIRE_LIB.read();
     return data;
   } else {
     return 0x00;

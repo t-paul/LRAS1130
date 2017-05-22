@@ -22,7 +22,15 @@
 #include "LRAS1130Picture12x11.h"
 #include "LRAS1130Picture24x5.h"
 
+#if defined(__AVR_ATtiny85__) || (__AVR_ATtiny2313__)
+#include <TinyWireM.h>
+#define LRAS1130_WIRE_LIB TinyWireM
+#define LRAS1130_WIRE_CLEAR_ERROR
+#else 
 #include <Wire.h>
+#define LRAS1130_WIRE_LIB Wire
+#define LRAS1130_WIRE_CLEAR_ERROR Wire.clearWriteError()
+#endif
 
 #ifdef ARDUINO_ARCH_AVR
 #include <inttypes.h>
@@ -302,6 +310,11 @@ public:
     SF_FrameOnMask  = 0b11111100,
   };
 
+protected:
+  enum InitDelay : unsigned long {
+    DefaultInitDelayMillis = 100
+  };
+
   /// @}
 
 public:
@@ -312,6 +325,22 @@ public:
   AS1130(ChipAddress chipAddress = ChipAddress0);
 
 public: // High-level functions.
+  /// @brief Initialize the library.
+  ///
+  /// @param initDelayMillis The number of milli seconds to block in
+  ///   this function to give the Chip a chance to initialize the
+  ///   communication interface. The default is 100ms which should
+  ///   be enough to directly call other library functions after the
+  ///   begin() call. This can be set to 0 if the required delay is
+  ///   managed in a different way.
+  ///
+  /// This function initializes the library, specifically the underlying
+  /// communication library. Normally the Wire library included with the
+  /// Arduino platform is used, but for ATtiny85 and ATtiny2313 TinyWireM 
+  /// is used which needs to be installed additionally.
+  ///
+  void begin(unsigned long initDelayMillis = DefaultInitDelayMillis);
+
   /// @brief Check the chip communication.
   ///
   /// This function checks if the chip aknowledges a command on the I2C bus.
@@ -802,6 +831,11 @@ public:
   /// @}
 
 private:
+
+  // internal function to send data to the chip via I2C with check
+  // to not overflow the Wire/TinyWire send buffers.
+  void writeToMemory(uint8_t registerSelection, uint8_t address, const uint8_t *data, uint8_t size, uint8_t inc);
+
   uint8_t _chipAddress; ///< The selected address of the chip.
 };
 
